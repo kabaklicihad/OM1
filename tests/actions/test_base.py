@@ -67,12 +67,11 @@ async def test_connector_connect():
 
 @pytest.mark.asyncio
 async def test_full_action_flow(agent_action):
-    # connector.connect is waiting for 'SampleOutput' not 'SampleInput'
     test_output = SampleOutput(result="processed_data")
-    
-    # Connect the output
+
     await agent_action.connector.connect(test_output)
     assert isinstance(agent_action.connector, SampleConnector)
+    assert agent_action.connector.last_output is not None
     assert agent_action.connector.last_output.result == "processed_data"
 
 
@@ -88,10 +87,8 @@ def test_agent_action_structure(agent_action):
     assert agent_action.interface == SampleInterface
     assert isinstance(agent_action.connector, SampleConnector)
 
-    # Let's verify other critical points of AgentAction
     assert agent_action.llm_label == "test_llm_label"
     assert agent_action.exclude_from_prompt is True
 
-    # Verify that SampleInterface uses SampleInput and SampleOutput
-    assert agent_action.interface.__annotations__['input'] == SampleInput
-    assert agent_action.interface.__annotations__['output'] == SampleOutput
+    assert agent_action.interface.__annotations__["input"] == SampleInput
+    assert agent_action.interface.__annotations__["output"] == SampleOutput
