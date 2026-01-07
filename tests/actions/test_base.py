@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, get_type_hints
 
 import pytest
 
@@ -19,8 +19,12 @@ class SampleOutput:
 # Test implementation of Interface
 @dataclass
 class SampleInterface(Interface[SampleInput, SampleOutput]):
+
     input: SampleInput
     output: SampleOutput
+
+    async def execute(self, input_data: SampleInput) -> SampleOutput:
+        return SampleOutput(result=f"processed: {input_data.value}")
 
 
 # Test implementation of ActionConnector
@@ -75,6 +79,17 @@ async def test_full_action_flow(agent_action):
     assert agent_action.connector.last_output.result == "processed_data"
 
 
+@pytest.mark.asyncio
+async def test_interface_invocation():
+    interface_instance = SampleInterface(input=None, output=None) 
+    test_input = SampleInput(value="hello")
+    
+    result = await interface_instance.execute(test_input)
+    
+    assert isinstance(result, SampleOutput)
+    assert result.result == "processed: hello"
+
+
 def test_action_config():
     config = ActionConfig()
 
@@ -90,5 +105,6 @@ def test_agent_action_structure(agent_action):
     assert agent_action.llm_label == "test_llm_label"
     assert agent_action.exclude_from_prompt is True
 
-    assert agent_action.interface.__annotations__["input"] == SampleInput
-    assert agent_action.interface.__annotations__["output"] == SampleOutput
+    type_hints = get_type_hints(agent_action.interface)
+    assert type_hints["input"] == SampleInput
+    assert type_hints["output"] == SampleOutput
